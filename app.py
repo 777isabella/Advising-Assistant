@@ -1,20 +1,67 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, redirect, session
+from data import users, students, prerequisites, faculty_advisees
 from recommendation import RecommendationEngine
 
 app = Flask(__name__)
+app.secret_key = "secret"
+
 engine = RecommendationEngine()
 
-@app.route("/recommend", methods=["POST"])
-def recommend():
-    data = request.json
 
-    completed = data["completed"]
+# ---------------- LOGIN ----------------
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        if username in users and users[username]["password"] == password:
+            session["user"] = username
+            session["role"] = users[username]["role"]
+            return redirect("/dashboard")
+
+    return render_template("login.html")
+
+
+# ---------------- DASHBOARD ----------------
+@app.route("/dashboard")
+def dashboard():
+    if "user" not in session:
+        return redirect("/")
+
+    role = session["role"]
+
+    if role == "student":
+        return render_template("dashboard.html", role=role)
+
+    if role == "faculty":
+        advisees = faculty_advisees.get(session["user"], [])
+        return render_template("dashboard.html", role=role, advisees=advisees)
+
+
+# ---------------- TRANSCRIPT ----------------
+@app.route("/transcript/<student>")
+def transcript(student):
+    if "user" not in session:
+        return redirect("/")
+
+    data = students.get(student)
+    return render_template("transcript.html", student=student, data=data)
+
+
+# ---------------- RECOMMENDATIONS ----------------
+@app.route("/recommend/<student>")
+def recommend(student):
+    data = students.get(student)
+
+    completed = data["transcript"]
     degree_plan = data["degree_plan"]
-    prereqs = data["prereqs"]
 
-    result = engine.generate(completed, degree_plan, prereqs)
+    recs = engine.generate(completed, degree_plan, prerequisites)
 
-    return jsonify({"recommended": result})
+    return render_template("recommendations.html", recs=recs)
 
+
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(debug=True)
