@@ -70,7 +70,34 @@ def course_detail(course_id):
         return "Course not found"
 
     return render_template("course.html", course_id=course_id, course=course)
+    
+#------------------ STUDENT'S REPORT -------------------------
+@app.route("/report/<student>")
+def report(student):
+    data = students.get(student)
 
+    if not data:
+        return "Student not found"
+
+    completed = data["transcript"]
+    degree_plan = data["degree_plan"]
+
+    recs = engine.generate(completed, degree_plan, prerequisites)
+
+    report_text = f"""
+    Advising Report for {student}
+
+    Completed Courses:
+    {', '.join(completed)}
+
+    Remaining Courses:
+    {', '.join([c for c in degree_plan if c not in completed])}
+
+    Recommended Next Courses:
+    {', '.join(recs)}
+    """
+
+    return f"<pre>{report_text}</pre>"
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
