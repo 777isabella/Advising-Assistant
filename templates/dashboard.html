@@ -3,12 +3,16 @@
 
 <!-- student dashboard -->
 {% if role == "student" %}
+    <p>Welcome, {{ session.user }}</p>
     <a href="/transcript/student1">View Transcript</a><br>
     <a href="/recommend/student1">Get Recommendations</a>
     <a href="/report/student1">Generate My Report</a>
+    <br>
+    <a href="/logout">Logout</a>
 
 <!-- faculty dashboard -->
 {% elif role == "faculty" %}
+    <p>Welcome, {{ session.user }}</p>
     <h3>Advisees:</h3>
     {% for s in advisees %}
         <p>{{ s }}
@@ -16,5 +20,8 @@
         <a href="/recommend/{{ s }}">Recommend</a>
         <a href="/report/{{ s }}">Generate Report</a>
         </p>
+    <br>
+<!--    logout for better session security-->
+    <a href="/logout">Logout</a>
     {% endfor %}
 {% endif %}
