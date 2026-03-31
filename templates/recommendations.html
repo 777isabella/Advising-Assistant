@@ -1,7 +1,10 @@
+<!-- recommendations form -->
 <h2>Recommended Courses</h2>
 
 <ul>
 {% for c in recs %}
-    <li>{{ c }}</li>
+    <li>
+        <a href="/course/{{ c }}">{{ c }}</a>
+    </li>
 {% endfor %}
 </ul>
