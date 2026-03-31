@@ -14,7 +14,7 @@ def register():
         username = request.form["username"]
         password = request.form["password"]
         role = request.form["role"]
-        
+
         if username in users:
             return "Username already exists!"
 
@@ -84,13 +84,16 @@ def recommend(student):
 
     completed = data["transcript"]
     degree_plan = data["degree_plan"]
-
+    #calls recommendationEngine which inherits from course and student classes
     recs = engine.generate(completed, degree_plan, prerequisites)
 
     return render_template("recommendations.html", recs=recs)
 
 
 # --------------course details page-----------------
+#this used for the course infromation, if you click on a course,
+#you will be redirected to a page with the course information
+#possibly might convert this into a pop-up instead like UTRGV Assist
 @app.route("/course/<course_id>")
 def course_detail(course_id):
     course = courses.get(course_id)
@@ -102,6 +105,8 @@ def course_detail(course_id):
 
 
 # ------------------ STUDENT'S REPORT -------------------------
+#This acts like a UTRGV's student degreeWorks
+#much more readable 
 @app.route("/report/<student>")
 def report(student):
     data = students.get(student)
@@ -114,6 +119,7 @@ def report(student):
 
     recs = engine.generate(completed, degree_plan, prerequisites)
 
+    #outputs
     report_text = f"""
     Advising Report for {student}
 
