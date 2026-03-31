@@ -61,6 +61,16 @@ def recommend(student):
 
     return render_template("recommendations.html", recs=recs)
 
+# --------------course details page-----------------
+@app.route("/course/<course_id>")
+def course_detail(course_id):
+    course = courses.get(course_id)
+
+    if not course:
+        return "Course not found"
+
+    return render_template("course.html", course_id=course_id, course=course)
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
