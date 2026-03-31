@@ -1,15 +1,19 @@
 <h2>Dashboard</h2>
 
+<!-- student dashboard -->
 {% if role == "student" %}
     <a href="/transcript/student1">View Transcript</a><br>
     <a href="/recommend/student1">Get Recommendations</a>
+    <a href="/report/student1">Generate My Report</a>
 
+<!-- faculty dashboard -->
 {% elif role == "faculty" %}
     <h3>Advisees:</h3>
     {% for s in advisees %}
         <p>{{ s }}
         <a href="/transcript/{{ s }}">Transcript</a>
         <a href="/recommend/{{ s }}">Recommend</a>
+        <a href="/report/{{ s }}">Generate Report</a>
         </p>
     {% endfor %}
 {% endif %}
