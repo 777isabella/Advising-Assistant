@@ -1,7 +1,10 @@
+<!-- #transcript form -->
 <h2>{{ student }} Transcript</h2>
 
 <ul>
 {% for course in data.transcript %}
-    <li>{{ course }}</li>
+    <li>
+        <a href="/course/{{ course }}">{{ course }}</a>
+    </li>
 {% endfor %}
 </ul>
