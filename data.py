@@ -22,6 +22,7 @@ courses = {
     "MATH2": {"description": "Precalculus", "credits": 4}
 }
 
+#more sample data for testing
 prerequisites = {
     "CYBI2": ["CYBI1"],
     "MATH2": ["MATH1"]
