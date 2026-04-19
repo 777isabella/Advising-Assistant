@@ -26,7 +26,7 @@ def register():
         if role == "student":
             students[username] = {
                 "transcript": [],
-                "degree_plan": ["CS1", "CS2", "MATH1", "MATH2"]
+                "degree_plan": ["CYBI1", "CYBI2", "MATH1", "MATH2"]
             }
 
         return redirect("/")
@@ -73,13 +73,22 @@ def transcript(student):
     if "user" not in session:
         return redirect("/")
 
-    data = students.get(student)
-    return render_template("transcript.html", student=student, data=data)
+    #security check
+    if session["role"] == "student" and student != session["user"]:
+        return "Access Denied"
 
+    data = students.get(student)
+
+    return render_template("transcript.html", student=student, data=data)
 
 # ---------------- RECOMMENDATIONS ----------------
 @app.route("/recommend/<student>")
 def recommend(student):
+    if "user" not in session:
+        return redirect("/")
+
+    if session["role"] == "student" and student != session["user"]:
+        return "Access Denied"
     data = students.get(student)
 
     completed = data["transcript"]
@@ -106,9 +115,15 @@ def course_detail(course_id):
 
 # ------------------ STUDENT'S REPORT -------------------------
 #This acts like a UTRGV's student degreeWorks
-#much more readable 
+#much more readable
 @app.route("/report/<student>")
 def report(student):
+    if "user" not in session:
+        return redirect("/")
+
+    #security check
+    if session["role"] == "student" and student != session["user"]:
+        return "Access Denied"
     data = students.get(student)
 
     if not data:
