@@ -11,7 +11,12 @@ students = {
     "student1": {
         "transcript": ["CYBI1", "MATH1"],
         "degree_plan": ["CYBI1", "CYBI2", "MATH1", "MATH2"]
+    },
+    "student2": {
+        "transcript": [],
+        "degree_plan": ["CYBI1", "CYBI2", "MATH1", "MATH2"]
     }
+
 }
 
 #sample courses, but we will be implementing the attached UTRGV cybersecurity 2024-2025 degree map
