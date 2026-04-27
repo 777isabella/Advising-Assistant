@@ -1,11 +1,86 @@
 from flask import Flask, render_template, request, redirect, session
-from data import users, students, prerequisites, faculty_advisees, courses
+
+import db
+from data import (
+    DEGREE_PLANS,
+    SEED_COURSES,
+    SEED_FACULTY_ADVISEES,
+    SEED_PREREQUISITES,
+    SEED_STUDENTS,
+    SEED_USERS,
+    flatten_degree_plan,
+)
 from recommendation import RecommendationEngine
+from requirements import build_requirements_snapshot
 
 app = Flask(__name__)
 app.secret_key = "secret"
 
 engine = RecommendationEngine()
+
+
+def seed_database(conn):
+    merged_users = dict(SEED_USERS)
+    for student_username in SEED_STUDENTS.keys():
+        if student_username not in merged_users:
+            merged_users[student_username] = {"password": "123", "role": "student"}
+
+    for username, payload in merged_users.items():
+        conn.execute(
+            "INSERT OR IGNORE INTO users(username, password, role) VALUES(?,?,?)",
+            (username, payload["password"], payload["role"]),
+        )
+        if payload["role"] == "student":
+            conn.execute("INSERT OR IGNORE INTO students(username) VALUES(?)", (username,))
+        else:
+            conn.execute("INSERT OR IGNORE INTO faculty(username) VALUES(?)", (username,))
+
+    for course_id, payload in SEED_COURSES.items():
+        conn.execute(
+            "INSERT OR REPLACE INTO courses(course_id, description, credits) VALUES(?,?,?)",
+            (course_id, payload["description"], payload["credits"]),
+        )
+
+    conn.execute("DELETE FROM prerequisites")
+    for course_id, prereqs in SEED_PREREQUISITES.items():
+        for prereq_course_id in prereqs:
+            conn.execute(
+                "INSERT OR IGNORE INTO prerequisites(course_id, prereq_course_id) VALUES(?,?)",
+                (course_id, prereq_course_id),
+            )
+
+    for faculty_username, advisees in SEED_FACULTY_ADVISEES.items():
+        for student_username in advisees:
+            conn.execute(
+                "INSERT OR IGNORE INTO faculty_advisees(faculty_username, student_username) VALUES(?,?)",
+                (faculty_username, student_username),
+            )
+
+    for student_username, payload in SEED_STUDENTS.items():
+        conn.execute("DELETE FROM degree_plan WHERE student_username = ?", (student_username,))
+        degree_plan_key = payload.get("degree_plan_key")
+        degree_plan = payload.get("degree_plan")
+        if degree_plan is None and degree_plan_key is not None:
+            degree_plan = flatten_degree_plan(degree_plan_key)
+        if degree_plan is None:
+            degree_plan = []
+        for idx, course_id in enumerate(degree_plan):
+            conn.execute(
+                "INSERT OR REPLACE INTO degree_plan(student_username, course_id, sort_order) VALUES(?,?,?)",
+                (student_username, course_id, idx),
+            )
+
+        transcript = payload.get("transcript", [])
+        conn.execute("DELETE FROM enrollments WHERE student_username = ?", (student_username,))
+        for row in transcript:
+            conn.execute(
+                "INSERT INTO enrollments(student_username, course_id, term, grade) VALUES(?,?,?,?)",
+                (student_username, row["course_id"], row.get("term"), row.get("grade")),
+            )
+
+
+db.init_db(seed_fn=seed_database)
+
 #-----------Register--------
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -15,19 +90,19 @@ def register():
         password = request.form["password"]
         role = request.form["role"]
 
-        if username in users:
+        if db.get_user(username) is not None:
             return "Username already exists!"
 
-        users[username] = {"password": password, "role": role}
+        db.create_user(username, password, role)
 
-        # If student, initialize empty data
-        #this is for testing purposes
-        #will remove later
         if role == "student":
-            students[username] = {
-                "transcript": [],
-                "degree_plan": ["CYBI1", "CYBI2", "MATH1", "MATH2"]
-            }
+            default_plan = flatten_degree_plan("UTRGV_CYBI_BS_2025_2026")
+            with db.connect() as conn:
+                for idx, course_id in enumerate(default_plan):
+                    conn.execute(
+                        "INSERT INTO degree_plan(student_username, course_id, sort_order) VALUES(?,?,?)",
+                        (username, course_id, idx),
+                    )
 
         return redirect("/")
 
@@ -41,10 +116,10 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        #authentication of credentials
-        if username in users and users[username]["password"] == password:
+        user = db.get_user(username)
+        if user is not None and user["password"] == password:
             session["user"] = username
-            session["role"] = users[username]["role"]
+            session["role"] = user["role"]
             return redirect("/dashboard")
 
     return render_template("login.html")
@@ -63,7 +138,7 @@ def dashboard():
         return render_template("dashboard.html", role=role)
 
     if role == "faculty":
-        advisees = faculty_advisees.get(session["user"], [])
+        advisees = db.list_advisees(session["user"])
         return render_template("dashboard.html", role=role, advisees=advisees)
 
 
@@ -77,9 +152,11 @@ def transcript(student):
     if session["role"] == "student" and student != session["user"]:
         return "Access Denied"
 
-    data = students.get(student)
-
-    return render_template("transcript.html", student=student, data=data)
+    transcript_rows = db.get_transcript_rows(student)
+    gpa = db.calculate_gpa(transcript_rows)
+    return render_template(
+        "transcript.html", student=student, transcript_rows=transcript_rows, gpa=gpa
+    )
 
 # ---------------- RECOMMENDATIONS ----------------
 @app.route("/recommend/<student>")
@@ -89,14 +166,24 @@ def recommend(student):
 
     if session["role"] == "student" and student != session["user"]:
         return "Access Denied"
-    data = students.get(student)
-
-    completed = data["transcript"]
-    degree_plan = data["degree_plan"]
-    #calls recommendationEngine which inherits from course and student classes
-    recs = engine.generate(completed, degree_plan, prerequisites)
+    completed = db.get_student_completed_courses(student)
+    degree_plan = db.get_student_degree_plan(student)
+    prereqs = db.get_prerequisites_map()
+    recs = engine.generate(completed, degree_plan, prereqs)
 
     return render_template("recommendations.html", recs=recs)
+
+
+@app.route("/requirements/<student>")
+def requirements(student):
+    if "user" not in session:
+        return redirect("/")
+
+    if session["role"] == "student" and student != session["user"]:
+        return "Access Denied"
+
+    snapshot = build_requirements_snapshot(student)
+    return render_template("requirements.html", **snapshot)
 
 
 # --------------course details page-----------------
@@ -105,7 +192,7 @@ def recommend(student):
 #possibly might convert this into a pop-up instead like UTRGV Assist
 @app.route("/course/<course_id>")
 def course_detail(course_id):
-    course = courses.get(course_id)
+    course = db.get_course(course_id)
 
     if not course:
         return "Course not found"
@@ -124,15 +211,12 @@ def report(student):
     #security check
     if session["role"] == "student" and student != session["user"]:
         return "Access Denied"
-    data = students.get(student)
+    completed = db.get_student_completed_courses(student)
+    degree_plan = db.get_student_degree_plan(student)
+    prereqs = db.get_prerequisites_map()
+    recs = engine.generate(completed, degree_plan, prereqs)
 
-    if not data:
-        return "Student not found"
-
-    completed = data["transcript"]
-    degree_plan = data["degree_plan"]
-
-    recs = engine.generate(completed, degree_plan, prerequisites)
+    snapshot = build_requirements_snapshot(student)
 
     #outputs
     report_text = f"""
@@ -146,6 +230,12 @@ def report(student):
 
     Recommended Next Courses:
     {', '.join(recs)}
+
+    Eligible Courses (Prereqs Met):
+    {', '.join(snapshot['eligible_courses'])}
+
+    Blocked Courses (Missing Prereqs):
+    {', '.join(snapshot['blocked_courses'])}
     """
 
     return f"<pre>{report_text}</pre>"
