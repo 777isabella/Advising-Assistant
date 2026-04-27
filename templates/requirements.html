@@ -1,0 +1,35 @@
+<h2>{{ student }} Requirements</h2>
+
+<h3>Recommended Next Courses</h3>
+<ul>
+{% for c in recommended_courses %}
+    <li><a href="/course/{{ c }}">{{ c }}</a></li>
+{% endfor %}
+</ul>
+
+<h3>Eligible (Prereqs Met)</h3>
+<ul>
+{% for c in eligible_courses %}
+    <li><a href="/course/{{ c }}">{{ c }}</a></li>
+{% endfor %}
+</ul>
+
+<h3>Blocked (Missing Prereqs)</h3>
+<ul>
+{% for c in blocked_courses %}
+    <li>
+        <a href="/course/{{ c }}">{{ c }}</a>
+        {% if missing_prereqs.get(c) %}
+            - missing: {{ ', '.join(missing_prereqs.get(c)) }}
+        {% endif %}
+    </li>
+{% endfor %}
+</ul>
+
+<h3>Remaining Degree Plan Courses</h3>
+<ul>
+{% for c in remaining_courses %}
+    <li><a href="/course/{{ c }}">{{ c }}</a></li>
+{% endfor %}
+</ul>
+

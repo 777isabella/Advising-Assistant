@@ -1,10 +1,18 @@
 <!-- #transcript form -->
 <h2>{{ student }} Transcript</h2>
 
+{% if gpa is not none %}
+    <p>Cumulative GPA: {{ gpa }}</p>
+{% else %}
+    <p>Cumulative GPA: N/A</p>
+{% endif %}
+
 <ul>
-{% for course in data.transcript %}
+{% for row in transcript_rows %}
     <li>
-        <a href="/course/{{ course }}">{{ course }}</a>
+        <a href="/course/{{ row.course_id }}">{{ row.course_id }}</a>
+        - {{ row.grade or 'In Progress' }} ({{ row.credits }} credits)
+        {% if row.term %}- {{ row.term }}{% endif %}
     </li>
 {% endfor %}
 </ul>

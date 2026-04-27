@@ -6,6 +6,7 @@
     <p>Welcome, {{ session.user }}</p>
         <a href="/transcript/{{ session.user }}">View Transcript</a><br>
         <a href="/recommend/{{ session.user }}">Get Recommendations</a><br>
+        <a href="/requirements/{{ session.user }}">View Requirements</a><br>
         <a href="/report/{{ session.user }}">Generate My Report</a>
     <br>
     <a href="/logout">Logout</a>
@@ -19,6 +20,7 @@
         <p>{{ s }}
         <a href="/transcript/{{ s }}">Transcript</a>
         <a href="/recommend/{{ s }}">Recommend</a>
+        <a href="/requirements/{{ s }}">Requirements</a>
         <a href="/report/{{ s }}">Generate Report</a>
         </p>
     {% endfor %}
