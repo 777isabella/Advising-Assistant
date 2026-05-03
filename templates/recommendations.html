@@ -1,5 +1,9 @@
 <!-- recommendations form -->
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 <h2>Recommended Courses</h2>
+
+<a class="btn" href="/dashboard">Back to Dashboard</a>
 
 <ul>
 {% for c in recs %}

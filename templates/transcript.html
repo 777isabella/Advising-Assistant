@@ -1,5 +1,9 @@
 <!-- #transcript form -->
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 <h2>{{ student }} Transcript</h2>
+
+<a class="btn" href="/dashboard">Back to Dashboard</a>
 
 {% if gpa is not none %}
     <p>Cumulative GPA: {{ gpa }}</p>

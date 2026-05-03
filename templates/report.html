@@ -1,0 +1,75 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<h2>Advising Report: {{ student }}</h2>
+
+<a class="btn" href="/dashboard">Back to Dashboard</a>
+
+<h3>Summary</h3>
+<table class="table">
+    <tr>
+        <th>Completed</th>
+        <th>In Progress</th>
+        <th>Remaining</th>
+        <th>Recommended Next (max 6)</th>
+    </tr>
+    <tr>
+        <td>{{ completed_courses|length }}</td>
+        <td>{{ in_progress_courses|length }}</td>
+        <td>{{ remaining_courses|length }}</td>
+        <td>{{ recommended_courses|length }}</td>
+    </tr>
+</table>
+
+<h3>Recommended Next Courses</h3>
+<table class="table">
+    <tr><th>Course</th></tr>
+    {% for c in recommended_courses %}
+        <tr><td><a href="/course/{{ c }}">{{ c }}</a></td></tr>
+    {% endfor %}
+</table>
+
+<h3>Courses In Progress</h3>
+<table class="table">
+    <tr><th>Course</th></tr>
+    {% for c in in_progress_courses %}
+        <tr><td><a href="/course/{{ c }}">{{ c }}</a></td></tr>
+    {% endfor %}
+</table>
+
+<h3>Completed Courses</h3>
+<table class="table">
+    <tr><th>Course</th></tr>
+    {% for c in completed_courses %}
+        <tr><td><a href="/course/{{ c }}">{{ c }}</a></td></tr>
+    {% endfor %}
+</table>
+
+<h3>Eligible (Prereqs Met)</h3>
+<table class="table">
+    <tr><th>Course</th></tr>
+    {% for c in eligible_courses %}
+        <tr><td><a href="/course/{{ c }}">{{ c }}</a></td></tr>
+    {% endfor %}
+</table>
+
+<h3>Blocked (Missing Prereqs)</h3>
+<table class="table">
+    <tr>
+        <th>Course</th>
+        <th>Missing Prereqs</th>
+    </tr>
+    {% for c in blocked_courses %}
+        <tr>
+            <td><a href="/course/{{ c }}">{{ c }}</a></td>
+            <td>{{ ', '.join(missing_prereqs.get(c, [])) }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+<h3>Remaining Degree Plan Courses</h3>
+<table class="table">
+    <tr><th>Course</th></tr>
+    {% for c in remaining_courses %}
+        <tr><td><a href="/course/{{ c }}">{{ c }}</a></td></tr>
+    {% endfor %}
+</table>

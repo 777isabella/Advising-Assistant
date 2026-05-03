@@ -1,4 +1,22 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 <h2>{{ student }} Requirements</h2>
+
+<a class="btn" href="/dashboard">Back to Dashboard</a>
+
+<h3>Completed Courses</h3>
+<ul>
+{% for c in completed_courses %}
+    <li><a href="/course/{{ c }}">{{ c }}</a></li>
+{% endfor %}
+</ul>
+
+<h3>Courses In Progress</h3>
+<ul>
+{% for c in in_progress_courses %}
+    <li><a href="/course/{{ c }}">{{ c }}</a></li>
+{% endfor %}
+</ul>
 
 <h3>Recommended Next Courses</h3>
 <ul>
@@ -32,4 +50,3 @@
     <li><a href="/course/{{ c }}">{{ c }}</a></li>
 {% endfor %}
 </ul>
-
