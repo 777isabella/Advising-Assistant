@@ -74,6 +74,15 @@ def init_db(seed_fn=None):
               FOREIGN KEY(student_username) REFERENCES students(username) ON DELETE CASCADE,
               FOREIGN KEY(course_id) REFERENCES courses(course_id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS audit_log (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+              actor_username TEXT,
+              action TEXT NOT NULL,
+              target_username TEXT,
+              metadata TEXT
+            );
             """
         )
 
@@ -90,7 +99,24 @@ def init_db(seed_fn=None):
             is not None
         )
 
-        if user_count == 0 or course_count == 0 or not has_new_plan_course:
+        has_plaintext_passwords = (
+            conn.execute(
+                """
+                SELECT 1
+                FROM users
+                WHERE password NOT LIKE 'pbkdf2:%' AND password NOT LIKE 'scrypt:%'
+                LIMIT 1
+                """
+            ).fetchone()
+            is not None
+        )
+
+        if (
+            user_count == 0
+            or course_count == 0
+            or not has_new_plan_course
+            or has_plaintext_passwords
+        ):
             seed_fn(conn)
 
 
@@ -141,6 +167,15 @@ def get_student_completed_courses(student_username):
     with connect() as conn:
         rows = conn.execute(
             "SELECT course_id FROM enrollments WHERE student_username = ? AND grade IS NOT NULL",
+            (student_username,),
+        ).fetchall()
+        return [r["course_id"] for r in rows]
+
+
+def get_student_in_progress_courses(student_username):
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT course_id FROM enrollments WHERE student_username = ? AND grade IS NULL",
             (student_username,),
         ).fetchall()
         return [r["course_id"] for r in rows]
@@ -214,3 +249,11 @@ def calculate_gpa(transcript_rows):
     if credits_attempted == 0:
         return None
     return round(quality_points / credits_attempted, 2)
+
+
+def log_audit(action, actor_username=None, target_username=None, metadata=None):
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO audit_log(actor_username, action, target_username, metadata) VALUES(?,?,?,?)",
+            (actor_username, action, target_username, metadata),
+        )

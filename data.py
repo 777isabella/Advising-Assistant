@@ -85,6 +85,27 @@ SEED_STUDENTS = {
         "transcript": [],
         "degree_plan_key": "UTRGV_CYBI_BS_2025_2026",
     },
+    "isabella": {
+        "transcript": [
+            {"course_id": "ENGL1301", "term": "Summer 2024", "grade": "A"},
+            {"course_id": "MATH2412", "term": "Summer 2024", "grade": "A"},
+            {"course_id": "CYBI1101", "term": "Fall 2025", "grade": "A"},
+            {"course_id": "CSCI1380", "term": "Summer 2024", "grade": "A"},
+            {"course_id": "ENGL1302", "term": "Summer 2024", "grade": "A"},
+            {"course_id": "CYBI2322", "term": "Spring 2025", "grade": "A"},
+            {"course_id": "CYBI2324", "term": "Spring 2025", "grade": "A"},
+            {"course_id": "CYBI3335", "term": "Spring 2026", "grade": None},
+            {"course_id": "CYBI3331", "term": "Spring 2026", "grade": None},
+            {"course_id": "BLAW3337", "term": "Summer 2025", "grade": "A"},
+            {"course_id": "CYBI3343", "term": "Spring 2026", "grade": None},
+            {"course_id": "COMM3313", "term": "Summer 2025", "grade": "A"},
+            {"course_id": "CRIJ1301", "term": "Summer 2025", "grade": "A"},
+            {"course_id": "POLS2305", "term": "Spring 2026", "grade": None},
+            {"course_id": "CYBI2326", "term": "Fall 2025", "grade": "A"},
+            {"course_id": "INFS3308", "term": "Fall 2024", "grade": "A"},
+        ],
+        "degree_plan_key": "UTRGV_CYBI_BS_2025_2026",
+    },
 }
 
 
@@ -155,4 +176,5 @@ SEED_PREREQUISITES = {
 
 SEED_FACULTY_ADVISEES = {
     "faculty1": ["student1"],
+    "faculty1": ["isabella"],
 }
